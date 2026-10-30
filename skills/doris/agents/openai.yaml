@@ -1,0 +1,4 @@
+interface:
+  display_name: "Doris"
+  short_description: "Apache Doris 文档写作、审查与知识参考技能"
+  default_prompt: "使用 $doris 审查或起草 Apache Doris 文档。"

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Trino"
+  short_description: "Trino 481 文档知识提炼与连接器运维实践指南"
+  default_prompt: "使用 $trino 回答一个 Trino 481 SQL、连接器或运维问题。"

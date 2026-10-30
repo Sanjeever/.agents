@@ -1,0 +1,4 @@
+interface:
+  display_name: "ClickHouse"
+  short_description: "ClickHouse 文档知识、建模、摄取与运维实践指南"
+  default_prompt: "使用 $clickhouse 设计 ClickHouse 表结构、摄取方案和性能优化建议。"

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Office 文件处理"
+  short_description: "处理 Word、PPT、Excel 和 Office 转换任务"
+  default_prompt: "使用 $office-files 提取、修改或转换 Office 文件。"

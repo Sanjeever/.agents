@@ -1,0 +1,4 @@
+interface:
+  display_name: "Git 日报"
+  short_description: "把每日 Git 提交和代码变更整理成面向老板的简洁日报"
+  default_prompt: "Use $daily-git-report 根据今天的 commit 和 git diff 生成一份简洁编号日报。"
