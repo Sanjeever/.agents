@@ -18,7 +18,7 @@ that are not needed.
 ## Prerequisites — Read Before You Touch Anything
 
 Before starting **any** task, read the project's existing docs and scan the project structure
-(`ls`, `package.json`, config files) so you understand the current state. Pay **special
+(directory listings, `package.json`, config files) so you understand the current state. Pay **special
 attention** to these three — they contain hard-won lessons and constraints that directly
 affect maintenance work:
 
@@ -137,10 +137,9 @@ test structure.
 
 **Steps:**
 
-1. Find large files:
-   ```bash
-   find src -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" | xargs wc -l | sort -rn | head -20
-   ```
+1. Find source files with the available file search tools, then count lines and inspect
+   the largest files using commands supported by the current shell. Exclude dependencies
+   and generated output.
 2. For each large file, identify natural seams:
    - Separate types/interfaces into a dedicated types file if they're substantial
    - Extract logically independent sections into their own modules

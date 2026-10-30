@@ -56,21 +56,13 @@ description: 根据 Git commit、git diff 和工作区状态生成简洁日报�
 
 ## 常用命令
 
-按当前 shell 调整引号和转义。默认先筛选用户常用邮箱：
+使用 Git 扩展正则筛选用户常用邮箱，保持整个表达式作为一个参数传入：
 
-```bash
-git log --since="YYYY-MM-DD 00:00:00" --until="YYYY-MM-DD 23:59:59" --author="hsr2026@qq.com\\|forgetfulcode@gmail.com\\|bestoftribe@foxmail.com" --date=iso --pretty=format:"%H%x09%ad%x09%ae%x09%s" --stat
+```text
+git log --since="YYYY-MM-DD 00:00:00" --until="YYYY-MM-DD 23:59:59" --extended-regexp --author="hsr2026@qq[.]com|forgetfulcode@gmail[.]com|bestoftribe@foxmail[.]com" --date=iso --pretty=format:"%H%x09%ad%x09%ae%x09%s" --stat
 git status --short
 git diff --stat
 git diff --cached --stat
-```
-
-如果 `--author` 正则在当前 Git 或 shell 中没有匹配结果，分别按三个邮箱查询后合并：
-
-```bash
-git log --since="YYYY-MM-DD 00:00:00" --until="YYYY-MM-DD 23:59:59" --author="hsr2026@qq.com" --date=iso --pretty=format:"%H%x09%ad%x09%ae%x09%s" --stat
-git log --since="YYYY-MM-DD 00:00:00" --until="YYYY-MM-DD 23:59:59" --author="forgetfulcode@gmail.com" --date=iso --pretty=format:"%H%x09%ad%x09%ae%x09%s" --stat
-git log --since="YYYY-MM-DD 00:00:00" --until="YYYY-MM-DD 23:59:59" --author="bestoftribe@foxmail.com" --date=iso --pretty=format:"%H%x09%ad%x09%ae%x09%s" --stat
 ```
 
 累计 diff 使用当天纳入统计的第一个 commit 的父提交到最后一个 commit。

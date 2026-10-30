@@ -3,7 +3,7 @@
 阅读本文件前，请确保已阅读 `../SKILL.md` 的通用工作流。
 
 > **输入路径处理（必读）**：本文件示例多用 `WORKDIR = Path.cwd()` + `glob()` 来发现文件。**仅在用户没有指定具体文件名时**才照搬这种写法。
-> 若用户指定了具体文件，把 `WORKDIR + glob` 那两行换成 `INPUT_PATH = Path(r"C:\...\具体文件.扩展名")`，详见 `../SKILL.md` 的 Script Requirements。
+> 若用户指定了具体文件，按其实际路径设置 `INPUT_PATH` 并直接处理该文件，替换目录扫描逻辑；详见 `../SKILL.md` 的脚本要求。
 
 ---
 
@@ -11,110 +11,21 @@
 
 | 转换 | 推荐方案 | 备注 |
 |---|---|---|
-| docx → pdf | `docx2pdf`（Windows / macOS） | 调用本机 Word / Pages，保真度最高 |
-| pptx → pdf | `comtypes`（仅 Windows） | 调用本机 PowerPoint COM 接口 |
-| xlsx → pdf | `comtypes`（仅 Windows） | 调用本机 Excel COM 接口 |
-| 任意 → pdf（无 Office 环境） | LibreOffice `soffice --headless --convert-to pdf` | 跨平台；需用户已安装 LibreOffice |
+| docx / pptx / xlsx → pdf | 已安装办公软件提供的转换接口，或 LibreOffice | 根据可用能力和版式保真要求选择 |
 | xlsx ↔ csv | `pandas` | 见 `excel.md` 第 8、9 节 |
 
-**重要前提**：`docx2pdf` 和 `comtypes` 方案都需要本机安装 Microsoft Office。运行前先确认；不确认就先询问用户。
+先通过只读检查确认当前环境已有的转换工具、版本和所需字体，按所选工具的实际接口执行。可执行文件不在 PATH 时，按需查找实际安装位置，不将本机路径固化进技能。
+
+要求保持原版式时，优先使用原格式对应办公软件提供的可用接口。使用其他转换引擎前应判断版式差异是否可接受；转换失败后明确报告，不自动切换引擎降低保真要求。缺少必要工具时说明缺失项，安装依据已有授权。
 
 ---
 
-## 二、docx → pdf（推荐：docx2pdf）
+## 二、LibreOffice 转换示例
 
-```python
-# /// script
-# requires-python = ">=3.10"
-# dependencies = ["docx2pdf"]
-# ///
-from pathlib import Path
-from docx2pdf import convert
+适用于已确认 LibreOffice 可用且转换效果满足要求的任务。命令名可用时执行：
 
-WORKDIR = Path.cwd()
-
-def main():
-    files = list(WORKDIR.glob("*.docx"))
-    if not files:
-        raise FileNotFoundError("未找到 docx 文件")
-
-    for input_path in files:
-        output_path = input_path.with_suffix(".pdf")
-        convert(str(input_path), str(output_path))
-        print(f"已转换：{output_path}")
-
-if __name__ == "__main__":
-    main()
-```
-
-注意事项：
-- 首次运行会启动 Word 进程，耗时 5-10 秒；批量转换时 Word 进程会被复用。
-- Word 正在前台被用户打开同一个文件时会失败，需先关闭。
-- macOS 上调用 Pages，对复杂格式（域、公式、文本框）的保真度低于 Windows 上的 Word。
-
----
-
-## 三、pptx / xlsx → pdf（Windows + Office COM）
-
-```python
-# /// script
-# requires-python = ">=3.10"
-# dependencies = ["comtypes"]
-# ///
-from pathlib import Path
-import comtypes.client
-
-WORKDIR = Path.cwd()
-
-# 17 = ppSaveAsPDF，0 = xlTypePDF
-PPT_PDF_FORMAT = 32   # ppSaveAsPDF 在 PowerPoint 2010+ 为 32
-XLS_PDF_FORMAT = 0    # xlTypePDF
-
-def pptx_to_pdf(input_path: Path) -> Path:
-    output_path = input_path.with_suffix(".pdf")
-    powerpoint = comtypes.client.CreateObject("PowerPoint.Application")
-    try:
-        deck = powerpoint.Presentations.Open(str(input_path), WithWindow=False)
-        deck.SaveAs(str(output_path), PPT_PDF_FORMAT)
-        deck.Close()
-    finally:
-        powerpoint.Quit()
-    return output_path
-
-def xlsx_to_pdf(input_path: Path) -> Path:
-    output_path = input_path.with_suffix(".pdf")
-    excel = comtypes.client.CreateObject("Excel.Application")
-    excel.Visible = False
-    try:
-        wb = excel.Workbooks.Open(str(input_path))
-        wb.ExportAsFixedFormat(XLS_PDF_FORMAT, str(output_path))
-        wb.Close(SaveChanges=False)
-    finally:
-        excel.Quit()
-    return output_path
-
-def main():
-    for path in WORKDIR.glob("*.pptx"):
-        print(f"PPT → PDF：{pptx_to_pdf(path)}")
-    for path in WORKDIR.glob("*.xlsx"):
-        print(f"XLSX → PDF：{xlsx_to_pdf(path)}")
-
-if __name__ == "__main__":
-    main()
-```
-
----
-
-## 四、跨平台回退：LibreOffice 命令行
-
-不依赖 Microsoft Office，需要用户已安装 LibreOffice。
-
-```bash
-# Linux / macOS
-soffice --headless --convert-to pdf input.docx --outdir ./
-
-# Windows（默认安装路径）
-"C:\Program Files\LibreOffice\program\soffice.exe" --headless --convert-to pdf input.docx --outdir .\
+```text
+soffice --headless --convert-to pdf input.docx --outdir .
 ```
 
 Python 封装：
@@ -127,29 +38,21 @@ Python 封装：
 from pathlib import Path
 import shutil
 import subprocess
-import sys
 
 WORKDIR = Path.cwd()
 
-def find_soffice() -> str:
-    candidate = shutil.which("soffice")
-    if candidate:
-        return candidate
-    if sys.platform == "win32":
-        win_path = Path(r"C:\Program Files\LibreOffice\program\soffice.exe")
-        if win_path.exists():
-            return str(win_path)
-    raise FileNotFoundError("未找到 LibreOffice (soffice)，请先安装。")
+SOFFICE = shutil.which("soffice") or shutil.which("libreoffice")
 
 def main():
-    soffice = find_soffice()
+    if SOFFICE is None:
+        raise FileNotFoundError("PATH 中未找到 LibreOffice；请先定位可执行文件并据实设置 SOFFICE。")
     patterns = ("*.docx", "*.pptx", "*.xlsx")
 
     for pattern in patterns:
         for path in WORKDIR.glob(pattern):
             print(f"转换：{path.name}")
             subprocess.run(
-                [soffice, "--headless", "--convert-to", "pdf",
+                [SOFFICE, "--headless", "--convert-to", "pdf",
                  str(path), "--outdir", str(WORKDIR)],
                 check=True,
             )
@@ -160,11 +63,13 @@ if __name__ == "__main__":
 
 ---
 
-## 五、何时不转换、转告用户手动操作
+## 三、验证与限制
+
+转换后确认目标文件存在，并检查页数、版式和所需字体。无法实际渲染检查时，明确说明验证限制。
 
 | 场景 | 建议 |
 |---|---|
-| 本机未安装 Office 且未装 LibreOffice | 提示用户：在 Word/PowerPoint/Excel 中"文件 → 另存为 PDF"，或安装 LibreOffice |
+| 未找到满足要求的转换工具 | 报告缺少的能力，说明可行的安装或手动导出方式 |
 | 文档含密码保护 | 不要尝试绕过；让用户先解除保护 |
 | .doc / .ppt / .xls 旧格式 | 先让用户在 Office 中另存为 .docx / .pptx / .xlsx |
 | 含动画的 PPT 要求"保留动画" | PDF 无动画；用户需要的可能是导出为视频，本 skill 不涵盖 |

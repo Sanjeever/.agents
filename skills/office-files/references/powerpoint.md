@@ -5,7 +5,7 @@
 阅读本文件前，请确保已阅读 `../SKILL.md` 的通用工作流。
 
 > **输入路径处理（必读）**：本文件示例多用 `WORKDIR = Path.cwd()` + `glob("*.pptx")` 来发现文件。**仅在用户没有指定具体文件名时**才照搬这种写法。
-> 若用户指定了具体文件，把 `WORKDIR + glob` 那两行换成 `INPUT_PATH = Path(r"C:\...\具体文件.pptx")`，详见 `../SKILL.md` 的 Script Requirements。
+> 若用户指定了具体文件，按其实际路径设置 `INPUT_PATH` 并直接处理该文件，替换目录扫描逻辑；详见 `../SKILL.md` 的脚本要求。
 
 ---
 
@@ -24,6 +24,8 @@
 | 6 | Blank | 空白 | 完全自由排版 |
 
 **创建汇报 PPT 时优先使用 `slide_layouts[6]` 空白布局。** 模板布局的字体、字号、占位符在中文环境里经常出现偏差，用空白布局 + `add_textbox()` / `add_shape()` 自由排版更可控。
+
+默认继承模板字体；需要指定字体时，确认当前环境和目标阅读环境具备该字体。
 
 ## 2. 按页读取全部文本
 
@@ -207,7 +209,7 @@ CARD    = RGBColor(0xF3, 0xF3, 0xF3)
 
 def add_textbox(slide, left, top, width, height, text, font_size=14,
                 color=TEXT, bold=False, alignment=PP_ALIGN.LEFT,
-                font_name="Microsoft YaHei"):
+                font_name=None):
     tb = slide.shapes.add_textbox(left, top, width, height)
     tf = tb.text_frame
     tf.word_wrap = True

@@ -4,7 +4,7 @@
   - `~/.codex/AGENTS.md` → 符号链接指向本文件
   - `~/.claude/CLAUDE.md` → 通过 `@~/.agents/AGENTS.md` 引入本文件
   - `~/.gemini/AGENTS.md` → 符号链接指向本文件，供 Antigravity CLI（`agy`）使用
-- `~/.agents/skills` 是技能的规范存放目录，`~/.claude/skills` 和 `~/.gemini/antigravity-cli/skills` 是指向它的目录 junction。
+- `~/.agents/skills` 是技能的规范存放目录，其他客户端通过目录链接或自身支持的配置复用。
 - 修改用户级提示词或创建 skill 时，只改 `~/.agents/AGENTS.md` 或 `~/.agents/skills` 即可，其他位置会自动同步。
 - 本文件在 Claude Code 侧走 `@` 导入，桌面端/Cowork 会话会跳过解析到会话工作目录之外的导入，CLI 不受影响。
 
@@ -136,20 +136,12 @@
 
 ## 命令行
 
-- 以工具说明和当前环境为准确认 shell。使用 Bash 工具时，采用 Bash 语法、Unix 命令和正斜杠路径（如 `/dev/null`、`/c/Users/Sanjeev`）；使用 PowerShell 工具时，采用 PowerShell 语法和原生命令。
-- 在 Bash 中需要 PowerShell 特性时，通过 `pwsh -Command "..."` 调用，pwsh 路径：`C:/Progra~1/PowerShell/7/pwsh.exe`。当前 shell 已是 PowerShell 时直接执行。
-
-### Bash 常用陷阱速查
-
-| 陷阱 | 正确做法 |
-|---|---|
-| `&&` 链式命令 | `&&` 在 Bash 工具中正常工作，无需替换 |
-| `export VAR=val` | `export VAR=val` 正常工作 |
-| Windows 盘符路径 | 用 `/c/Users/...` 而非 `C:\Users\...` |
-| NUL | 统一用 `/dev/null` |
-| Edit 匹配含 Tab 的代码 | Read 渲染 Tab 有歧义（跳表位对齐），目测数不清。**Edit 第一次失败就切 `cat -A` + `sed`/PowerShell**，不要反复重试 |
-| Edit 匹配含中文的代码 | Unicode 转义与字面中文可能不匹配。优先用纯 ASCII 行做锚点，中文部分用行号定位 |
-| Bash 工具多行字符串 | **死都不要**用 PowerShell here-string（`@'...'@`），它在 bash 里是字面量，`@` 和 `'` 会直接混入内容！**正确做法：** ① 简单多行用双引号内嵌 `\n`；② git commit 用多个 `-m` 分段（`git commit -m "subject" -m "body line 1" -m "body line 2"`）；③ 复杂脚本写临时文件再执行。**2026-06-10 事故：** 在 Bash 工具里用 `git commit -m @'...'@` 导致提交信息首行变成 `@`，已推送到远程才被发现，牢记教训。 |
+- 根据当前工具信息和必要检查确认操作系统、shell、可用命令和工具版本。命令语法、路径、引号、环境变量、重定向和多行字符串应适配当前 shell。
+- 优先使用项目已有工具链、包装器和 PATH 中的命令。无法直接调用时，按需检查环境变量、工具配置和标准安装位置。
+- 不假定用户名、主目录、安装路径、代理地址或本地仓库位置。网络和依赖源沿用已有环境及工具配置，新增配置时优先使用官方源。
+- 环境检查围绕当前任务展开。缺少必要工具或配置时明确报告，安装工具或修改全局配置应依据已有授权。
+- 文本和脚本默认使用 UTF-8。文件路径通过当前环境或用户输入确定，程序内使用标准路径库，技能内部资源使用相对路径。
+- 编辑匹配失败时检查实际字符、缩进和编码，再选用可靠锚点或行号定位。提交信息等多行文本应使用能保留原文的参数或文件传递，避免 shell 展开和转义改变内容。
 
 ## Python
 
@@ -173,31 +165,18 @@
 
 ## Rust
 
-- Rust 工具链已通过 `rustup` 安装，`rustc`、`cargo`、`rustup` 命令均可用。
-- 当前默认工具链：`stable-x86_64-pc-windows-msvc`，默认 host：`x86_64-pc-windows-msvc`。
-- `rustup home`：`C:\Users\Sanjeev\.rustup`；Cargo 命令位于 `C:\Users\Sanjeev\.cargo\bin`，其中 `cargo.exe`、`rustc.exe`、`rustfmt.exe`、`rust-analyzer.exe` 等均为指向 `rustup.exe` 的代理。
-- 网络统一走本地代理 `http://127.0.0.1:7897`(FlClash)，工具保持官方源。
-- `RUSTUP_DIST_SERVER`、`RUSTUP_UPDATE_ROOT` 未设置，rustup 走官方 `static.rust-lang.org`。
-- Cargo 用户级配置文件：`C:\Users\Sanjeev\.cargo\config.toml`，使用官方 crates.io + HTTP 代理：
-
-```toml
-[http]
-proxy = "http://127.0.0.1:7897"
-
-[net]
-git-fetch-with-cli = true
-```
+- 优先遵循项目的 `rust-toolchain.toml` 或 `rust-toolchain`；未指定时使用当前环境已有工具链。
+- 按任务需要确认 host、target 和 Cargo 配置，不假定特定平台工具链或安装位置。
 
 ## Maven
 
-- Maven 安装路径：`D:/apache-maven-3.9.2`，本地仓库路径：`D:/apache-maven-repository`。不要使用 `~/.m2` 或默认的 `C:\Users\Sanjeev\.m2` 作为仓库路径。运行 maven 命令时使用 `D:/apache-maven-3.9.2/bin/mvn`。
-- Maven 使用官方 Maven Central(无第三方镜像)。代理走 `~/.m2/settings.xml` 与 `D:/apache-maven-3.9.2/conf/settings.xml` 中的 `flclash` proxy(`127.0.0.1:7897`)。
+- 优先使用项目提供的 Maven Wrapper，否则使用当前环境可用的 Maven。
+- 遵循项目和用户已有的 `settings.xml`、本地仓库与代理配置，不擅自改用其他仓库目录或镜像。
 
 ## Java
 
-- 使用 OpenJDK 17。
-- Java 可执行文件路径：`D:/jdks/jdk-17.0.12-full/bin/java.exe`
-- 运行 Java 命令时使用完整路径或确保该 JDK 在 PATH 中
+- 默认使用 OpenJDK 17；项目或所用工具明确要求其他版本时，遵循对应要求。
+- 根据项目工具链、`JAVA_HOME` 和实际命令输出确认 JDK，不写死安装路径。
 
 ## SQL
 
@@ -206,6 +185,6 @@ git-fetch-with-cli = true
 ## Git
 
 - 默认分支名为 `main`（不是 `master`）。创建仓库、切换分支、合并或变基时，始终以 `main` 为基础分支。
-- `pull.rebase = true`，偏好线性历史。合并工作时优先考虑 rebase 策略，避免不必要的 merge commit。
+- 偏好线性历史，拉取时优先使用 `git pull --rebase`，合并工作时优先考虑 rebase 策略，避免不必要的 merge commit。
 - 生成 commit message 时，默认遵循 [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) 规范，格式为 `<type>(<scope>): <description>`，常用 type：`feat`、`fix`、`refactor`、`docs`、`test`、`chore`。除非用户明确要求其他格式。
 

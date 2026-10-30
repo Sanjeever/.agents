@@ -7,7 +7,7 @@
 阅读本文件前，请确保已阅读 `../SKILL.md` 的通用工作流。
 
 > **输入路径处理（必读）**：本文件示例多用 `WORKDIR = Path.cwd()` + `glob("*.xlsx")` 来发现文件。**仅在用户没有指定具体文件名时**才照搬这种写法。
-> 若用户指定了具体文件，把 `WORKDIR + glob` 那两行换成 `INPUT_PATH = Path(r"C:\...\具体文件.xlsx")`，详见 `../SKILL.md` 的 Script Requirements。
+> 若用户指定了具体文件，按其实际路径设置 `INPUT_PATH` 并直接处理该文件，替换目录扫描逻辑；详见 `../SKILL.md` 的脚本要求。
 
 ---
 

@@ -7,6 +7,8 @@ description: "读取、提取、修改、创建或转换 Office 文件，包括 
 
 使用一次性 Python 脚本处理 `.docx`、`.pptx`、`.xlsx`、`.csv` 与常见 Office 到 PDF 转换。先按任务类型读取对应参考文件，再执行脚本。
 
+根据当前环境确认输入路径、可用工具和字体。资源路径相对于本技能目录解析，不假定特定操作系统、用户名、安装位置或已安装的办公软件。
+
 ## 参考文件路由
 
 - Word `.docx`：读取 `references/word.md`
@@ -21,7 +23,7 @@ description: "读取、提取、修改、创建或转换 Office 文件，包括 
 3. 编写一次性 Python 脚本；脚本顶部包含 PEP 723 内联依赖声明。
 4. 用户给出具体文件路径时，把完整路径作为 `Path(r"...")` 字符串字面量写入脚本；用户只给目录或要求批量处理时，用 `Path.glob()` 发现文件。
 5. 修改已有 Office 文件时默认另存为新文件，除非用户明确要求覆盖。
-6. 使用 `PYTHONUTF8=1 uv run script.py` 运行脚本。
+6. 使用 `uv run script.py` 运行脚本；需要强制 UTF-8 时，按当前 shell 的语法为本次进程设置 `PYTHONUTF8=1`。
 7. 成功后报告输出文件；失败时保留脚本并报告错误。
 
 ## 库选择
@@ -32,8 +34,7 @@ description: "读取、提取、修改、创建或转换 Office 文件，包括 
 | PowerPoint `.pptx` | python-pptx | `python-pptx` | `import pptx` |
 | Excel cell-level read/write | openpyxl | `openpyxl` | `import openpyxl` |
 | Excel/CSV analysis and conversion | pandas | `pandas`, `openpyxl` | `import pandas as pd` |
-| DOCX to PDF | docx2pdf | `docx2pdf` | `from docx2pdf import convert` |
-| PPTX/XLSX to PDF on Windows | comtypes | `comtypes` | `import comtypes.client` |
+| Office to PDF | 根据已安装工具与保真要求选择，见 `references/conversion.md` | 按实际方案声明 | 按实际方案导入 |
 
 ## 脚本要求
 
@@ -48,16 +49,18 @@ Use PEP 723 metadata at the top of every generated script:
 
 Run the script directly with `uv` so it can read the PEP 723 dependencies:
 
-```bash
-PYTHONUTF8=1 uv run script.py
+```text
+uv run script.py
 ```
 
-Do not use command-line arguments for Chinese file paths. Encode paths in the script:
+需要强制 UTF-8 时，为本次进程设置 `PYTHONUTF8=1`，设置方式依据当前 shell。保留直接执行脚本的形式，让 `uv` 读取内联依赖声明。
+
+将用户指定的实际路径写入脚本，正确处理路径中的引号和反斜杠，不假定用户目录：
 
 ```python
 from pathlib import Path
 
-INPUT_PATH = Path(r"C:\Users\Sanjeev\Documents\服务内容清单.docx")
+INPUT_PATH = Path("服务内容清单.docx")  # 替换为用户指定的实际路径
 if not INPUT_PATH.exists():
     raise FileNotFoundError(INPUT_PATH)
 ```
@@ -67,7 +70,7 @@ if not INPUT_PATH.exists():
 ```python
 from pathlib import Path
 
-WORKDIR = Path(r"C:\Users\Sanjeev\Documents")
+WORKDIR = Path.cwd()  # 运行前确认工作目录，或替换为用户指定的目录
 files = sorted(WORKDIR.glob("*.docx"))
 if not files:
     raise FileNotFoundError("未找到 docx 文件")
@@ -95,5 +98,5 @@ if not files:
 2. 脚本包含 PEP 723 头，依赖列表完整。
 3. 具体文件用路径字面量；目录或批量任务才使用 `glob()`。
 4. 修改类任务默认另存。
-5. 运行方式为 `PYTHONUTF8=1 uv run script.py`。
+5. 使用 `uv run script.py` 识别内联依赖声明，编码设置适配当前环境。
 6. 失败时保留脚本并报告异常。
