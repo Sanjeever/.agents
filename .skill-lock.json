@@ -20,6 +20,15 @@
       "pluginName": "hallmark",
       "installedAt": "2026-11-23T12:06:33.759Z",
       "updatedAt": "2026-11-23T12:06:33.759Z"
+    },
+    "code-review-excellence": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/wshobson/agents.git",
+      "skillPath": "plugins/developer-essentials/skills/code-review-excellence/SKILL.md",
+      "skillFolderHash": "eb067e9432b526fe6a13cea53be60ad6f853fced",
+      "installedAt": "2026-11-27T09:13:03.249Z",
+      "updatedAt": "2026-11-27T09:13:03.249Z"
     }
   },
   "dismissed": {
